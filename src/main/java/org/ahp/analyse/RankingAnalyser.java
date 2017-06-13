@@ -15,7 +15,8 @@ import org.ahp.structure.ZipkinSpan;
 public class RankingAnalyser {
 
 	private static final int THRESHOLD_DURATION_EACH_TRACE = 2000;
-	private static final int THRESHOLD_DURATION_EACH_SPAN = 200;
+	private static final int THRESHOLD_DURATION_EACH_SPAN_HIGH = 1000;
+	private static final int THRESHOLD_DURATION_EACH_SPAN_LOW = (THRESHOLD_DURATION_EACH_SPAN_HIGH / 4);
 
 	public void calculateRankingIndizes(List<ZipkinSpan> spans) {
 
@@ -30,31 +31,45 @@ public class RankingAnalyser {
 		}
 
 		for (Entry<Long, List<ZipkinSpan>> entryZipkinSpan : mapTraceSpans.entrySet()) {
-			long duration = 0;
-
-			// Find root span
-			for (ZipkinSpan zipkinSpan : entryZipkinSpan.getValue()) {
-				if (zipkinSpan.getParent_id() == null) {
-					duration = zipkinSpan.getDuration();
-					break;
-				}
-			}
-
-			// Standard Approach
-			setRankingParameter(entryZipkinSpan.getValue(), mapRankingParameter, (duration >= THRESHOLD_DURATION_EACH_TRACE));
-
-			// Advanced Approach
-			if (((double) duration / entryZipkinSpan.getValue().size()) >= THRESHOLD_DURATION_EACH_SPAN) {
-				// System.out.println(entryZipkinSpan.getKey() +
-				// " - FAILED! ::: EACH SPAN");
-			} else {
-				// System.out.println(entryZipkinSpan.getKey() +
-				// " - PASSED! ::: EACH SPAN");
-			}
-
+			setRankingParameter(entryZipkinSpan.getValue(), mapRankingParameter, checkCondition(entryZipkinSpan.getValue()));
+			System.out.println(String.format("Fussy? %.5f", checkFussyCondition(entryZipkinSpan.getValue())));
 		}
 
 		callRankingMethods(mapRankingParameter.values());
+	}
+
+	private double checkFussyCondition(List<ZipkinSpan> spans) {
+
+		long duration = getDurationOfTrace(spans);
+		double avgSpanDuration = (double) duration / spans.size();
+
+		if (avgSpanDuration >= THRESHOLD_DURATION_EACH_SPAN_HIGH) {
+			return 1;
+		} else if (avgSpanDuration <= THRESHOLD_DURATION_EACH_SPAN_LOW) {
+			return 0;
+		}
+
+		return (avgSpanDuration - THRESHOLD_DURATION_EACH_SPAN_LOW) / (THRESHOLD_DURATION_EACH_SPAN_HIGH - THRESHOLD_DURATION_EACH_SPAN_LOW);
+	}
+
+	private boolean checkCondition(List<ZipkinSpan> spans) {
+
+		long duration = getDurationOfTrace(spans);
+		double avgSpanDuration = (double) duration / spans.size();
+
+		// (duration >= THRESHOLD_DURATION_EACH_TRACE)
+		final boolean METRIC_QUERY = (avgSpanDuration >= THRESHOLD_DURATION_EACH_SPAN_HIGH);
+		return METRIC_QUERY;
+	}
+
+	private long getDurationOfTrace(List<ZipkinSpan> spans) {
+		for (ZipkinSpan zipkinSpan : spans) {
+			// Find root span
+			if (zipkinSpan.getParent_id() == null) {
+				return zipkinSpan.getDuration();
+			}
+		}
+		return 0;
 	}
 
 	private HashMap<Long, List<ZipkinSpan>> getTraceSpans(List<ZipkinSpan> spans) {
@@ -81,6 +96,8 @@ public class RankingAnalyser {
 		System.out.println("<Trace-Status> failed: " + failed);
 
 		List<Long> listMicroserviceID = new ArrayList<Long>();
+
+		// Check 'execute'
 		for (ZipkinSpan zipkinSpan : listSpans) {
 
 			long microserviceId = zipkinSpan.getEndpoint_ipv4();
@@ -100,6 +117,7 @@ public class RankingAnalyser {
 			}
 		}
 
+		// Check 'not execute'
 		for (Entry<Long, RankingParameter> entryRankingParameter : mapAllParameter.entrySet()) {
 
 			long microserviceId = entryRankingParameter.getValue().getMicroserviceId();
@@ -121,16 +139,21 @@ public class RankingAnalyser {
 	}
 
 	private void callRankingMethods(Collection<RankingParameter> listRankingParameter) {
+
+		ISBFLRankingMethod[] methods = { new Tarantula(), new Ochiai(), new Ochiai2() };
+
 		for (RankingParameter rankingParameter : listRankingParameter) {
 
 			System.out.println(rankingParameter);
+			System.out.print(String.format("Microservice-ID: %d, ", rankingParameter.getMicroserviceId()));
 
-			double rankingIndex1 = callRankingMethod(new Tarantula(), rankingParameter);
-			double rankingIndex2 = callRankingMethod(new Ochiai(), rankingParameter);
-			double rankingIndex3 = callRankingMethod(new Ochiai2(), rankingParameter);
-
-			System.out.println(String.format("Microservice-ID: %d, Tarantula: %s, Ochiai: %s, Ochiai2: %s \n", rankingParameter.getMicroserviceId(),
-					rankingIndex1, rankingIndex2, rankingIndex3));
+			List<Double> listRankingIndizes = new ArrayList<Double>();
+			for (ISBFLRankingMethod method : methods) {
+				double rankingIndex = callRankingMethod(method, rankingParameter);
+				listRankingIndizes.add(rankingIndex);
+				System.out.print(String.format("%s: %.5f, ", method.getClass().getSimpleName(), rankingIndex));
+			}
+			System.out.println("\n");
 		}
 	}
 

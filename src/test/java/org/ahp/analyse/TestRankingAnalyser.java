@@ -56,42 +56,40 @@ public class TestRankingAnalyser {
 	@Test
 	public void testCalculateRankingIndizes() {
 
-		ZipkinSpan span1 = new ZipkinSpan();
-		listSpans.add(span1);
-		span1.setDuration(100l);
-		span1.setEndpoint_ipv4(1000l);
-		span1.setTrace_id(20000l);
+		listSpans.add(initZipkinSpan(20000l, 1000l, null, 100l + 100l + 10000l));
+		listSpans.add(initZipkinSpan(20000l, 1001l, 1000l, 100l));
+		listSpans.add(initZipkinSpan(20000l, 1002l, 1001l, 10000l));
 
-		ZipkinSpan span2 = new ZipkinSpan();
-		listSpans.add(span2);
-		span2.setDuration(100l);
-		span2.setEndpoint_ipv4(1001l);
-		span2.setTrace_id(20001l);
+		listSpans.add(initZipkinSpan(20001l, 1001l, null, 100l + 100l));
+		listSpans.add(initZipkinSpan(20001l, 1003l, 1001l, 100l));
 
-		ZipkinSpan span3 = new ZipkinSpan();
-		listSpans.add(span3);
-		span3.setDuration(100l);
-		span3.setEndpoint_ipv4(1000l);
-		span3.setTrace_id(20002l);
+		listSpans.add(initZipkinSpan(20002l, 1000l, null, 100l + 50l));
+		listSpans.add(initZipkinSpan(20002l, 1003l, 1000l, 50l));
 
-		ZipkinSpan span4 = new ZipkinSpan();
-		listSpans.add(span4);
-		span4.setDuration(10000l);
-		span4.setEndpoint_ipv4(1002l);
-		span4.setTrace_id(20003l);
+		listSpans.add(initZipkinSpan(20003l, 1000l, null, 100l + 10000l));
+		listSpans.add(initZipkinSpan(20003l, 1002l, 1000l, 10000l));
 
-		ZipkinSpan span5 = new ZipkinSpan();
-		listSpans.add(span5);
-		span5.setDuration(100l);
-		span5.setEndpoint_ipv4(1000l);
-		span5.setTrace_id(20003l);
+		listSpans.add(initZipkinSpan(20004l, 1001l, null, 100l + 10000l + 100l));
+		listSpans.add(initZipkinSpan(20004l, 1002l, 1001l, 10000l));
+		listSpans.add(initZipkinSpan(20004l, 1003l, 1001l, 100l));
 
-		ZipkinSpan span6 = new ZipkinSpan();
-		listSpans.add(span6);
-		span6.setDuration(100l);
-		span6.setEndpoint_ipv4(1002l);
-		span6.setTrace_id(20004l);
+		listSpans.add(initZipkinSpan(20005l, 1001l, null, 500l + 5000l));
+		listSpans.add(initZipkinSpan(20005l, 1002l, 1001l, 5000l));
+		listSpans.add(initZipkinSpan(20005l, 1003l, 1001l, 100l));
+		listSpans.add(initZipkinSpan(20005l, 1003l, 1001l, 100l));
+		listSpans.add(initZipkinSpan(20005l, 1003l, 1001l, 100l));
+		listSpans.add(initZipkinSpan(20005l, 1003l, 1001l, 100l));
 
 		analyser.calculateRankingIndizes(listSpans);
 	}
+
+	private ZipkinSpan initZipkinSpan(Long traceId, Long microserviceId, Long parentId, Long duration) {
+		ZipkinSpan span = new ZipkinSpan();
+		span.setDuration(duration);
+		span.setEndpoint_ipv4(microserviceId);
+		span.setTrace_id(traceId);
+		span.setParent_id(parentId);
+		return span;
+	}
+
 }
