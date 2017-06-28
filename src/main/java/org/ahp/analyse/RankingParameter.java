@@ -2,10 +2,10 @@ package org.ahp.analyse;
 
 public class RankingParameter {
 
-	private long numberExecuteFailed = 0;
-	private long numberExecutePassed = 0;
-	private long numberNotExecuteFailed = 0;
-	private long numberNotExecutePassed = 0;
+	private double numberExecuteFailed = 0;
+	private double numberExecutePassed = 0;
+	private double numberNotExecuteFailed = 0;
+	private double numberNotExecutePassed = 0;
 
 	private long microserviceId;
 
@@ -13,35 +13,29 @@ public class RankingParameter {
 		this.microserviceId = microserviceId;
 	}
 
-	public void increaceNumberExecuteFailed() {
-		numberExecuteFailed++;
+	public void increaseExecute(double passed) {
+		numberExecutePassed += passed;
+		numberExecuteFailed += (1 - passed);
 	}
 
-	public void increaceNumberExecutePassed() {
-		numberExecutePassed++;
+	public void increaseNotExecute(double passed) {
+		numberNotExecutePassed += passed;
+		numberNotExecuteFailed += (1 - passed);
 	}
 
-	public void increaceNumberNotExecuteFailed() {
-		numberNotExecuteFailed++;
-	}
-
-	public void increaceNumberNotExecutePassed() {
-		numberNotExecutePassed++;
-	}
-
-	public long getNumberExecuteFailed() {
+	public double getNumberExecuteFailed() {
 		return numberExecuteFailed;
 	}
 
-	public long getNumberExecutePassed() {
+	public double getNumberExecutePassed() {
 		return numberExecutePassed;
 	}
 
-	public long getNumberNotExecuteFailed() {
+	public double getNumberNotExecuteFailed() {
 		return numberNotExecuteFailed;
 	}
 
-	public long getNumberNotExecutePassed() {
+	public double getNumberNotExecutePassed() {
 		return numberNotExecutePassed;
 	}
 
@@ -56,8 +50,9 @@ public class RankingParameter {
 	 */
 	@Override
 	public String toString() {
-		return "RankingParameter [numberExecuteFailed=" + numberExecuteFailed + ", numberExecutePassed=" + numberExecutePassed + ", numberNotExecuteFailed="
-				+ numberNotExecuteFailed + ", numberNotExecutePassed=" + numberNotExecutePassed + ", microserviceId=" + microserviceId + "]";
+		return String
+				.format("RankingParameter [numberExecuteFailed=%.3f, numberExecutePassed=%.3f, numberNotExecuteFailed=%.3f, numberNotExecutePassed=%.3f, microserviceId=%d]",
+						numberExecuteFailed, numberExecutePassed, numberNotExecuteFailed, numberNotExecutePassed, microserviceId);
 	}
 
 }

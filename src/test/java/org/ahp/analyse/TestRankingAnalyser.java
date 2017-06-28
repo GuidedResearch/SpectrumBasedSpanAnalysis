@@ -60,10 +60,10 @@ public class TestRankingAnalyser {
 		listSpans.add(initZipkinSpan(20000l, 1001l, 1000l, 100l));
 		listSpans.add(initZipkinSpan(20000l, 1002l, 1001l, 10000l));
 
-		listSpans.add(initZipkinSpan(20001l, 1001l, null, 100l + 100l));
+		listSpans.add(initZipkinSpan(20001l, 1001l, null, 1400l + 100l));
 		listSpans.add(initZipkinSpan(20001l, 1003l, 1001l, 100l));
 
-		listSpans.add(initZipkinSpan(20002l, 1000l, null, 100l + 50l));
+		listSpans.add(initZipkinSpan(20002l, 1000l, null, 950l + 50l));
 		listSpans.add(initZipkinSpan(20002l, 1003l, 1000l, 50l));
 
 		listSpans.add(initZipkinSpan(20003l, 1000l, null, 100l + 10000l));
@@ -79,6 +79,9 @@ public class TestRankingAnalyser {
 		listSpans.add(initZipkinSpan(20005l, 1003l, 1001l, 100l));
 		listSpans.add(initZipkinSpan(20005l, 1003l, 1001l, 100l));
 		listSpans.add(initZipkinSpan(20005l, 1003l, 1001l, 100l));
+
+		listSpans.add(initZipkinSpan(20006l, 1001l, null, 100l + 50l));
+		listSpans.add(initZipkinSpan(20006l, 1002l, 1001l, 50l));
 
 		analyser.calculateRankingIndizes(listSpans);
 	}

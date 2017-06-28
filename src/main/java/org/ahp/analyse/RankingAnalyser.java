@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.ahp.analyse.condition.AbstractRankingMode;
+import org.ahp.analyse.condition.RankingModeFussy;
+import org.ahp.analyse.condition.RankingModeStandard;
 import org.ahp.analyse.sbfl.ISBFLRankingMethod;
 import org.ahp.analyse.sbfl.Ochiai;
 import org.ahp.analyse.sbfl.Ochiai2;
@@ -14,13 +17,34 @@ import org.ahp.structure.ZipkinSpan;
 
 public class RankingAnalyser {
 
-	private static final int THRESHOLD_DURATION_EACH_TRACE = 2000;
-	private static final int THRESHOLD_DURATION_EACH_SPAN_HIGH = 1000;
-	private static final int THRESHOLD_DURATION_EACH_SPAN_LOW = (THRESHOLD_DURATION_EACH_SPAN_HIGH / 4);
-
 	public void calculateRankingIndizes(List<ZipkinSpan> spans) {
 
 		HashMap<Long, List<ZipkinSpan>> mapTraceSpans = getTraceSpans(spans);
+
+		System.out.println("\n=== Standard ===");
+		AbstractRankingMode standardMode = new RankingModeStandard();
+		executeRankingAnalyser(mapTraceSpans, standardMode);
+
+		System.out.println("\n=== Fussy ===");
+		AbstractRankingMode fussyMode = new RankingModeFussy();
+		executeRankingAnalyser(mapTraceSpans, fussyMode);
+
+	}
+
+	private void executeRankingAnalyser(HashMap<Long, List<ZipkinSpan>> mapTraceSpans, AbstractRankingMode rankingMode) {
+
+		HashMap<Long, RankingParameter> mapRankingParameter = initRankingParametersOfMicroservices(mapTraceSpans);
+
+		for (Entry<Long, List<ZipkinSpan>> entryZipkinSpan : mapTraceSpans.entrySet()) {
+			calculateRankingParameter(entryZipkinSpan.getValue(), mapRankingParameter, rankingMode.checkCondition(entryZipkinSpan.getValue()));
+		}
+
+		System.out.println("\n=== SBFL techniques ===");
+
+		callRankingMethods(mapRankingParameter.values());
+	}
+
+	private HashMap<Long, RankingParameter> initRankingParametersOfMicroservices(HashMap<Long, List<ZipkinSpan>> mapTraceSpans) {
 		HashMap<Long, RankingParameter> mapRankingParameter = new HashMap<Long, RankingParameter>();
 
 		// Create for all microservices ranking parameters
@@ -30,46 +54,7 @@ public class RankingAnalyser {
 			}
 		}
 
-		for (Entry<Long, List<ZipkinSpan>> entryZipkinSpan : mapTraceSpans.entrySet()) {
-			setRankingParameter(entryZipkinSpan.getValue(), mapRankingParameter, checkCondition(entryZipkinSpan.getValue()));
-			System.out.println(String.format("Fussy? %.5f", checkFussyCondition(entryZipkinSpan.getValue())));
-		}
-
-		callRankingMethods(mapRankingParameter.values());
-	}
-
-	private double checkFussyCondition(List<ZipkinSpan> spans) {
-
-		long duration = getDurationOfTrace(spans);
-		double avgSpanDuration = (double) duration / spans.size();
-
-		if (avgSpanDuration >= THRESHOLD_DURATION_EACH_SPAN_HIGH) {
-			return 1;
-		} else if (avgSpanDuration <= THRESHOLD_DURATION_EACH_SPAN_LOW) {
-			return 0;
-		}
-
-		return (avgSpanDuration - THRESHOLD_DURATION_EACH_SPAN_LOW) / (THRESHOLD_DURATION_EACH_SPAN_HIGH - THRESHOLD_DURATION_EACH_SPAN_LOW);
-	}
-
-	private boolean checkCondition(List<ZipkinSpan> spans) {
-
-		long duration = getDurationOfTrace(spans);
-		double avgSpanDuration = (double) duration / spans.size();
-
-		// (duration >= THRESHOLD_DURATION_EACH_TRACE)
-		final boolean METRIC_QUERY = (avgSpanDuration >= THRESHOLD_DURATION_EACH_SPAN_HIGH);
-		return METRIC_QUERY;
-	}
-
-	private long getDurationOfTrace(List<ZipkinSpan> spans) {
-		for (ZipkinSpan zipkinSpan : spans) {
-			// Find root span
-			if (zipkinSpan.getParent_id() == null) {
-				return zipkinSpan.getDuration();
-			}
-		}
-		return 0;
+		return mapRankingParameter;
 	}
 
 	private HashMap<Long, List<ZipkinSpan>> getTraceSpans(List<ZipkinSpan> spans) {
@@ -92,8 +77,7 @@ public class RankingAnalyser {
 		return mapTraceSpans;
 	}
 
-	private void setRankingParameter(List<ZipkinSpan> listSpans, HashMap<Long, RankingParameter> mapAllParameter, boolean failed) {
-		System.out.println("<Trace-Status> failed: " + failed);
+	private void calculateRankingParameter(List<ZipkinSpan> listSpans, HashMap<Long, RankingParameter> mapAllParameter, double fussyValue) {
 
 		List<Long> listMicroserviceID = new ArrayList<Long>();
 
@@ -110,11 +94,7 @@ public class RankingAnalyser {
 
 			RankingParameter currentMicroservice = mapAllParameter.get(microserviceId);
 
-			if (failed) {
-				currentMicroservice.increaceNumberExecuteFailed();
-			} else {
-				currentMicroservice.increaceNumberExecutePassed();
-			}
+			currentMicroservice.increaseExecute(1 - fussyValue);
 		}
 
 		// Check 'not execute'
@@ -130,11 +110,7 @@ public class RankingAnalyser {
 
 			RankingParameter currentMicroservice = mapAllParameter.get(microserviceId);
 
-			if (failed) {
-				currentMicroservice.increaceNumberNotExecuteFailed();
-			} else {
-				currentMicroservice.increaceNumberNotExecutePassed();
-			}
+			currentMicroservice.increaseNotExecute(1 - fussyValue);
 		}
 	}
 
