@@ -10,7 +10,7 @@ public class Ochiai2 implements ISBFLRankingMethod {
 		double numerator = rankingParameter.getNumberExecuteFailed() * rankingParameter.getNumberNotExecutePassed();
 
 		double sumExectued = rankingParameter.getNumberExecuteFailed() + rankingParameter.getNumberExecutePassed();
-		double sumNotExectued = rankingParameter.getNumberNotExecuteFailed() + rankingParameter.getNumberNotExecutePassed();
+		double sumNotExectued = rankingParameter.getNumberNotExecutePassed() + rankingParameter.getNumberNotExecuteFailed();
 		double sumFailed = rankingParameter.getNumberExecuteFailed() + rankingParameter.getNumberNotExecuteFailed();
 		double sumPassed = rankingParameter.getNumberExecutePassed() + rankingParameter.getNumberNotExecutePassed();
 

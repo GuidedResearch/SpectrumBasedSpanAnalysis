@@ -5,15 +5,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.ahp.analyse.condition.AbstractRankingMode;
 import org.ahp.analyse.condition.RankingModeFussy;
 import org.ahp.analyse.condition.RankingModeStandard;
 import org.ahp.analyse.sbfl.ISBFLRankingMethod;
-import org.ahp.analyse.sbfl.Ochiai;
-import org.ahp.analyse.sbfl.Ochiai2;
-import org.ahp.analyse.sbfl.Tarantula;
 import org.ahp.structure.ZipkinSpan;
+import org.reflections.Reflections;
 
 public class RankingAnalyser {
 
@@ -39,9 +38,8 @@ public class RankingAnalyser {
 			calculateRankingParameter(entryZipkinSpan.getValue(), mapRankingParameter, rankingMode.checkCondition(entryZipkinSpan.getValue()));
 		}
 
-		System.out.println("\n=== SBFL techniques ===");
-
-		callRankingMethods(mapRankingParameter.values());
+		List<RankingResult> listRankingResults = callRankingMethods(mapRankingParameter.values());
+		this.printRankingResults(listRankingResults);
 	}
 
 	private HashMap<Long, RankingParameter> initRankingParametersOfMicroservices(HashMap<Long, List<ZipkinSpan>> mapTraceSpans) {
@@ -114,26 +112,71 @@ public class RankingAnalyser {
 		}
 	}
 
-	private void callRankingMethods(Collection<RankingParameter> listRankingParameter) {
+	private List<RankingResult> callRankingMethods(Collection<RankingParameter> listRankingParameter) {
 
-		ISBFLRankingMethod[] methods = { new Tarantula(), new Ochiai(), new Ochiai2() };
+		Reflections reflections = new Reflections("org.ahp.analyse.sbfl");
+		Set<Class<? extends ISBFLRankingMethod>> allRankingMethods = reflections.getSubTypesOf(ISBFLRankingMethod.class);
+
+		List<RankingResult> listRankingResults = new ArrayList<RankingResult>();
 
 		for (RankingParameter rankingParameter : listRankingParameter) {
 
-			System.out.println(rankingParameter);
-			System.out.print(String.format("Microservice-ID: %d, ", rankingParameter.getMicroserviceId()));
+			RankingResult rankingResult = new RankingResult(rankingParameter.getMicroserviceId(), rankingParameter);
+			listRankingResults.add(rankingResult);
 
-			List<Double> listRankingIndizes = new ArrayList<Double>();
-			for (ISBFLRankingMethod method : methods) {
-				double rankingIndex = callRankingMethod(method, rankingParameter);
-				listRankingIndizes.add(rankingIndex);
-				System.out.print(String.format("%s: %.5f, ", method.getClass().getSimpleName(), rankingIndex));
+			for (Class<? extends ISBFLRankingMethod> method : allRankingMethods) {
+				try {
+					double result = callRankingMethod(method.newInstance(), rankingParameter);
+					rankingResult.addRankingResult(method.getSimpleName(), result);
+				} catch (InstantiationException | IllegalAccessException e) {
+					e.printStackTrace();
+				}
 			}
-			System.out.println("\n");
 		}
+
+		return listRankingResults;
 	}
 
 	private double callRankingMethod(ISBFLRankingMethod rankingTechnique, RankingParameter rankingParameter) {
 		return rankingTechnique.calculateRankingIndex(rankingParameter);
+	}
+
+	private void printRankingResults(List<RankingResult> listRankingResults) {
+
+		System.out.println("\n=== SBFL techniques ===");
+
+		for (RankingResult rankingResult : listRankingResults) {
+
+			System.out.println(rankingResult.getRankingParameter());
+			System.out.print(String.format("Microservice-ID: %d, ", rankingResult.getMicroserviceId()));
+			for (Entry<String, Double> result : rankingResult.getRankingResult().entrySet()) {
+				System.out.print(String.format("%s: %.5f, ", result.getKey(), result.getValue()));
+			}
+
+			System.out.println("\n");
+		}
+
+		System.out.println("\n=== SBFL techniques (as CSV) ===");
+
+		System.out.print("Microservice-ID; ");
+
+		for (String rankingMethod : listRankingResults.get(0).getRankingResult().keySet()) {
+			System.out.print(rankingMethod + "; ");
+		}
+
+		System.out.println();
+
+		for (RankingResult rankingResult : listRankingResults) {
+
+			System.out.print(rankingResult.getMicroserviceId() + "; ");
+
+			// Same order
+			for (String rankingMethod : rankingResult.getRankingResult().keySet()) {
+				double result = rankingResult.getRankingResult().get(rankingMethod);
+				System.out.print(String.format("%.5f; ", result));
+			}
+
+			System.out.println();
+		}
 	}
 }

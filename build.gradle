@@ -27,4 +27,5 @@ targetCompatibility = 1.8
 dependencies {
     compile("org.springframework.boot:spring-boot-starter-web")
     compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.6'    
+    compile group: 'org.reflections', name: 'reflections', version: '0.9.5-RC2'
 }
