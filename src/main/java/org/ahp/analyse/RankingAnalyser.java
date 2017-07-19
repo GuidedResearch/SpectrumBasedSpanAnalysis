@@ -32,7 +32,7 @@ public class RankingAnalyser {
 
 	private void executeRankingAnalyser(HashMap<Long, List<ZipkinSpan>> mapTraceSpans, AbstractRankingMode rankingMode) {
 
-		HashMap<Long, RankingParameter> mapRankingParameter = initRankingParametersOfMicroservices(mapTraceSpans);
+		HashMap<String, RankingParameter> mapRankingParameter = initRankingParametersOfMicroservices(mapTraceSpans);
 
 		for (Entry<Long, List<ZipkinSpan>> entryZipkinSpan : mapTraceSpans.entrySet()) {
 			calculateRankingParameter(entryZipkinSpan.getValue(), mapRankingParameter, rankingMode.checkCondition(entryZipkinSpan.getValue()));
@@ -42,13 +42,13 @@ public class RankingAnalyser {
 		this.printRankingResults(listRankingResults);
 	}
 
-	private HashMap<Long, RankingParameter> initRankingParametersOfMicroservices(HashMap<Long, List<ZipkinSpan>> mapTraceSpans) {
-		HashMap<Long, RankingParameter> mapRankingParameter = new HashMap<Long, RankingParameter>();
+	private HashMap<String, RankingParameter> initRankingParametersOfMicroservices(HashMap<Long, List<ZipkinSpan>> mapTraceSpans) {
+		HashMap<String, RankingParameter> mapRankingParameter = new HashMap<String, RankingParameter>();
 
 		// Create for all microservices ranking parameters
 		for (Entry<Long, List<ZipkinSpan>> entryZipkinSpan : mapTraceSpans.entrySet()) {
 			for (ZipkinSpan zipkinSpan : entryZipkinSpan.getValue()) {
-				mapRankingParameter.put(zipkinSpan.getEndpoint_ipv4(), new RankingParameter(zipkinSpan.getEndpoint_ipv4()));
+				mapRankingParameter.put(zipkinSpan.getEndpoint_service_name(), new RankingParameter(zipkinSpan.getEndpoint_service_name()));
 			}
 		}
 
@@ -75,14 +75,14 @@ public class RankingAnalyser {
 		return mapTraceSpans;
 	}
 
-	private void calculateRankingParameter(List<ZipkinSpan> listSpans, HashMap<Long, RankingParameter> mapAllParameter, double fussyValue) {
+	private void calculateRankingParameter(List<ZipkinSpan> listSpans, HashMap<String, RankingParameter> mapAllParameter, double fussyValue) {
 
-		List<Long> listMicroserviceID = new ArrayList<Long>();
+		List<String> listMicroserviceID = new ArrayList<String>();
 
 		// Check 'execute'
 		for (ZipkinSpan zipkinSpan : listSpans) {
 
-			long microserviceId = zipkinSpan.getEndpoint_ipv4();
+			String microserviceId = zipkinSpan.getEndpoint_service_name();
 
 			// Use each microservice only once in a trace
 			if (listMicroserviceID.contains(microserviceId)) {
@@ -96,9 +96,9 @@ public class RankingAnalyser {
 		}
 
 		// Check 'not execute'
-		for (Entry<Long, RankingParameter> entryRankingParameter : mapAllParameter.entrySet()) {
+		for (Entry<String, RankingParameter> entryRankingParameter : mapAllParameter.entrySet()) {
 
-			long microserviceId = entryRankingParameter.getValue().getMicroserviceId();
+			String microserviceId = entryRankingParameter.getValue().getMicroserviceId();
 
 			// Use each microservice only once
 			if (listMicroserviceID.contains(microserviceId)) {
@@ -148,7 +148,7 @@ public class RankingAnalyser {
 		for (RankingResult rankingResult : listRankingResults) {
 
 			System.out.println(rankingResult.getRankingParameter());
-			System.out.print(String.format("Microservice-ID: %d, ", rankingResult.getMicroserviceId()));
+			System.out.print(String.format("Microservice-ID: %s, ", rankingResult.getMicroserviceId()));
 			for (Entry<String, Double> result : rankingResult.getRankingResult().entrySet()) {
 				System.out.print(String.format("%s: %.5f, ", result.getKey(), result.getValue()));
 			}

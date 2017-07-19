@@ -7,9 +7,9 @@ public class RankingParameter {
 	private double numberNotExecuteFailed = 0;
 	private double numberNotExecutePassed = 0;
 
-	private long microserviceId;
+	private String microserviceId;
 
-	public RankingParameter(long microserviceId) {
+	public RankingParameter(String microserviceId) {
 		this.microserviceId = microserviceId;
 	}
 
@@ -39,7 +39,7 @@ public class RankingParameter {
 		return numberNotExecutePassed;
 	}
 
-	public long getMicroserviceId() {
+	public String getMicroserviceId() {
 		return microserviceId;
 	}
 
@@ -51,7 +51,7 @@ public class RankingParameter {
 	@Override
 	public String toString() {
 		return String
-				.format("RankingParameter [numberExecuteFailed=%.3f, numberExecutePassed=%.3f, numberNotExecuteFailed=%.3f, numberNotExecutePassed=%.3f, microserviceId=%d]",
+				.format("RankingParameter [numberExecuteFailed=%.3f, numberExecutePassed=%.3f, numberNotExecuteFailed=%.3f, numberNotExecutePassed=%.3f, microserviceId=%s]",
 						numberExecuteFailed, numberExecutePassed, numberNotExecuteFailed, numberNotExecutePassed, microserviceId);
 	}
 

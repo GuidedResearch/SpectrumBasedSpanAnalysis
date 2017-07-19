@@ -4,13 +4,13 @@ import java.util.HashMap;
 
 public class RankingResult {
 
-	private long microserviceId;
+	private String microserviceId;
 
 	private HashMap<String, Double> rankingResult;
 
 	private RankingParameter parameter;
 
-	public RankingResult(long microserviceId, RankingParameter parameter) {
+	public RankingResult(String microserviceId, RankingParameter parameter) {
 		this.microserviceId = microserviceId;
 		this.parameter = parameter;
 		this.rankingResult = new HashMap<String, Double>();
@@ -20,7 +20,7 @@ public class RankingResult {
 		this.rankingResult.put(method, result);
 	}
 
-	public long getMicroserviceId() {
+	public String getMicroserviceId() {
 		return microserviceId;
 	}
 
