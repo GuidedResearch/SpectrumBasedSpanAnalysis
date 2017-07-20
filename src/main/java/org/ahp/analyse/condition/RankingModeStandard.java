@@ -20,4 +20,9 @@ public class RankingModeStandard extends AbstractRankingMode {
 		return METRIC_QUERY ? 1 : 0;
 	}
 
+	@Override
+	public String getRankingModeName() {
+		return "Standard";
+	}
+
 }

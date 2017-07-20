@@ -8,38 +8,40 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.ahp.analyse.condition.AbstractRankingMode;
-import org.ahp.analyse.condition.RankingModeFussy;
+import org.ahp.analyse.condition.RankingModeFuzzy;
 import org.ahp.analyse.condition.RankingModeStandard;
-import org.ahp.analyse.sbfl.ISBFLRankingMethod;
+import org.ahp.analyse.metrics.ISBFLRankingMethod;
 import org.ahp.structure.ZipkinSpan;
 import org.reflections.Reflections;
 
+/**
+ * Analyzes ZipkinSpans with SBFL metrics.
+ */
 public class RankingAnalyser {
 
-	public void calculateRankingIndizes(List<ZipkinSpan> spans) {
+	private static final String PACKAGE_OF_SBFL_METRICS = "org.ahp.analyse.metrics";
 
-		HashMap<Long, List<ZipkinSpan>> mapTraceSpans = getTraceSpans(spans);
-
-		System.out.println("\n=== Standard ===");
-		AbstractRankingMode standardMode = new RankingModeStandard();
-		executeRankingAnalyser(mapTraceSpans, standardMode);
-
-		System.out.println("\n=== Fussy ===");
-		AbstractRankingMode fussyMode = new RankingModeFussy();
-		executeRankingAnalyser(mapTraceSpans, fussyMode);
-
-	}
-
-	private void executeRankingAnalyser(HashMap<Long, List<ZipkinSpan>> mapTraceSpans, AbstractRankingMode rankingMode) {
+	/**
+	 * Calculate the suspiciousness of the provided ZipkinSpans for each
+	 * implemented SBFL metric.
+	 * 
+	 * @param mapTraceSpans
+	 *            TraceID with the corresponding spans.
+	 * @param rankingMode
+	 *            Use {@link RankingModeStandard} or {@link RankingModeFuzzy} .
+	 * @return List of all SBFL metrics and there results of the provided
+	 *         ZipkinSpans.
+	 */
+	public List<RankingResult> calculateSuspiciousness(HashMap<Long, List<ZipkinSpan>> mapTraceSpans, AbstractRankingMode rankingMode) {
 
 		HashMap<String, RankingParameter> mapRankingParameter = initRankingParametersOfMicroservices(mapTraceSpans);
 
 		for (Entry<Long, List<ZipkinSpan>> entryZipkinSpan : mapTraceSpans.entrySet()) {
-			calculateRankingParameter(entryZipkinSpan.getValue(), mapRankingParameter, rankingMode.checkCondition(entryZipkinSpan.getValue()));
+			double conditionResult = rankingMode.checkCondition(entryZipkinSpan.getValue());
+			this.calculateRankingParameter(entryZipkinSpan.getValue(), mapRankingParameter, conditionResult);
 		}
 
-		List<RankingResult> listRankingResults = callRankingMethods(mapRankingParameter.values());
-		this.printRankingResults(listRankingResults);
+		return this.callRankingMethods(mapRankingParameter.values());
 	}
 
 	private HashMap<String, RankingParameter> initRankingParametersOfMicroservices(HashMap<Long, List<ZipkinSpan>> mapTraceSpans) {
@@ -53,26 +55,6 @@ public class RankingAnalyser {
 		}
 
 		return mapRankingParameter;
-	}
-
-	private HashMap<Long, List<ZipkinSpan>> getTraceSpans(List<ZipkinSpan> spans) {
-		HashMap<Long, List<ZipkinSpan>> mapTraceSpans = new HashMap<Long, List<ZipkinSpan>>();
-		for (ZipkinSpan zipkinSpan : spans) {
-
-			Long traceID = zipkinSpan.getTrace_id();
-			if (traceID == null) {
-				throw new IllegalArgumentException("TraceID is null!");
-			}
-
-			if (mapTraceSpans.containsKey(traceID)) {
-				mapTraceSpans.get(traceID).add(zipkinSpan);
-			} else {
-				List<ZipkinSpan> tempSpanList = new ArrayList<ZipkinSpan>();
-				tempSpanList.add(zipkinSpan);
-				mapTraceSpans.put(traceID, tempSpanList);
-			}
-		}
-		return mapTraceSpans;
 	}
 
 	private void calculateRankingParameter(List<ZipkinSpan> listSpans, HashMap<String, RankingParameter> mapAllParameter, double fussyValue) {
@@ -114,7 +96,7 @@ public class RankingAnalyser {
 
 	private List<RankingResult> callRankingMethods(Collection<RankingParameter> listRankingParameter) {
 
-		Reflections reflections = new Reflections("org.ahp.analyse.sbfl");
+		Reflections reflections = new Reflections(PACKAGE_OF_SBFL_METRICS);
 		Set<Class<? extends ISBFLRankingMethod>> allRankingMethods = reflections.getSubTypesOf(ISBFLRankingMethod.class);
 
 		List<RankingResult> listRankingResults = new ArrayList<RankingResult>();
@@ -141,42 +123,4 @@ public class RankingAnalyser {
 		return rankingTechnique.calculateRankingIndex(rankingParameter);
 	}
 
-	private void printRankingResults(List<RankingResult> listRankingResults) {
-
-		System.out.println("\n=== SBFL techniques ===");
-
-		for (RankingResult rankingResult : listRankingResults) {
-
-			System.out.println(rankingResult.getRankingParameter());
-			System.out.print(String.format("Microservice-ID: %s, ", rankingResult.getMicroserviceId()));
-			for (Entry<String, Double> result : rankingResult.getRankingResult().entrySet()) {
-				System.out.print(String.format("%s: %.5f, ", result.getKey(), result.getValue()));
-			}
-
-			System.out.println("\n");
-		}
-
-		System.out.println("\n=== SBFL techniques (as CSV) ===");
-
-		System.out.print("Microservice-ID; ");
-
-		for (String rankingMethod : listRankingResults.get(0).getRankingResult().keySet()) {
-			System.out.print(rankingMethod + "; ");
-		}
-
-		System.out.println();
-
-		for (RankingResult rankingResult : listRankingResults) {
-
-			System.out.print(rankingResult.getMicroserviceId() + "; ");
-
-			// Same order
-			for (String rankingMethod : rankingResult.getRankingResult().keySet()) {
-				double result = rankingResult.getRankingResult().get(rankingMethod);
-				System.out.print(String.format("%.5f; ", result));
-			}
-
-			System.out.println();
-		}
-	}
 }

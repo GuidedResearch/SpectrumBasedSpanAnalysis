@@ -21,4 +21,5 @@ public abstract class AbstractRankingMode {
 		return 0;
 	}
 
+	public abstract String getRankingModeName();
 }
