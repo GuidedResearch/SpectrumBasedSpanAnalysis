@@ -11,7 +11,7 @@ import org.ahp.analyse.RankingResult;
  */
 public class SBFLMetricEvaluation {
 
-	private static final int[] HIT_AT_X = { 2, 3 };
+	private static final int[] HIT_AT_X = { 2, 3};
 
 	/**
 	 * Evaluate the provided RankingResults with Hit@X. The list of microservice

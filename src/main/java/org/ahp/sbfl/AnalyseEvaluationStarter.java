@@ -75,18 +75,18 @@ public class AnalyseEvaluationStarter {
 
 	private void printRankingResults(List<RankingResult> listRankingResults) {
 
-		System.out.println("\n=== SBFL techniques ===");
-
-		for (RankingResult rankingResult : listRankingResults) {
-
-			System.out.println(rankingResult.getRankingParameter());
-			System.out.print(String.format("Microservice-ID: %s, ", rankingResult.getMicroserviceId()));
-			for (Entry<String, Double> result : rankingResult.getRankingResult().entrySet()) {
-				System.out.print(String.format("%s: %.5f, ", result.getKey(), result.getValue()));
-			}
-
-			System.out.println("\n");
-		}
+//		System.out.println("\n=== SBFL techniques ===");
+//
+//		for (RankingResult rankingResult : listRankingResults) {
+//
+//			System.out.println(rankingResult.getRankingParameter());
+//			System.out.print(String.format("Microservice-ID: %s, ", rankingResult.getMicroserviceId()));
+//			for (Entry<String, Double> result : rankingResult.getRankingResult().entrySet()) {
+//				System.out.print(String.format("%s: %.5f, ", result.getKey(), result.getValue()));
+//			}
+//
+//			System.out.println("\n");
+//		}
 
 		System.out.println("\n=== SBFL techniques (as CSV) ===");
 
@@ -105,7 +105,7 @@ public class AnalyseEvaluationStarter {
 			// Same order
 			for (String rankingMethod : rankingResult.getRankingResult().keySet()) {
 				double result = rankingResult.getRankingResult().get(rankingMethod);
-				System.out.print(String.format("%.5f; ", result));
+				System.out.print(String.format("%.5f; ", result).replace(',', '.'));
 			}
 
 			System.out.println();

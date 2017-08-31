@@ -7,7 +7,7 @@ import org.ahp.structure.ZipkinSpan;
 public abstract class AbstractRankingMode {
 
 	protected static final int THRESHOLD_DURATION_EACH_SPAN_HIGH = 10000;
-	protected static final int THRESHOLD_DURATION_EACH_SPAN_LOW = (THRESHOLD_DURATION_EACH_SPAN_HIGH / 4);
+	protected static final int THRESHOLD_DURATION_EACH_SPAN_LOW = (THRESHOLD_DURATION_EACH_SPAN_HIGH / 2);
 
 	public abstract double checkCondition(List<ZipkinSpan> spans);
 

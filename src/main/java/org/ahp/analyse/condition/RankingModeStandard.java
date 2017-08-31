@@ -15,7 +15,7 @@ public class RankingModeStandard extends AbstractRankingMode {
 		// (duration >= THRESHOLD_DURATION_EACH_TRACE)
 		final boolean METRIC_QUERY = (avgSpanDuration >= THRESHOLD_DURATION_EACH_SPAN_HIGH);
 
-		System.out.println(String.format("<Trace-Status> TraceID: %s | Failed: %b", spans.get(0).getTrace_id(), METRIC_QUERY));
+//		System.out.println(String.format("<Trace-Status> TraceID: %s | Failed: %b", spans.get(0).getTrace_id(), METRIC_QUERY));
 
 		return METRIC_QUERY ? 1 : 0;
 	}
