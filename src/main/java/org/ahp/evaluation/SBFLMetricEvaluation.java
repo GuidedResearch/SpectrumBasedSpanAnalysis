@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.ahp.Configuration;
 import org.ahp.analyse.RankingResult;
 
 /**
@@ -11,7 +12,7 @@ import org.ahp.analyse.RankingResult;
  */
 public class SBFLMetricEvaluation {
 
-	private static final int[] HIT_AT_X = { 2, 3 };
+	private static final int[] HIT_AT_X = Configuration.HIT_AT_X;
 
 	/**
 	 * Evaluate the provided RankingResults with Hit@X. The list of microservice

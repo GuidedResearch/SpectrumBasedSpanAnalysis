@@ -8,11 +8,6 @@ import java.sql.SQLException;
 public class DBConnector {
 
 	private Connection conn = null;
-	private static final String HOSTNAME = System.getProperty("zipkin.mysql.hostname");
-	private static final String PORT = System.getProperty("zipkin.mysql.port");
-	private static final String DB_NAME = System.getProperty("zipkin.mysql.dbname");
-	private static final String USER = System.getProperty("zipkin.mysql.user");
-	private static final String PASSWORD = System.getProperty("zipkin.mysql.password");
 
 	public void connect() {
 
@@ -25,8 +20,8 @@ public class DBConnector {
 		}
 		try {
 			System.out.println("* Verbindung aufbauen");
-			String url = "jdbc:mysql://" + HOSTNAME + ":" + PORT + "/" + DB_NAME;
-			conn = DriverManager.getConnection(url, USER, PASSWORD);
+			String url = "jdbc:mysql://" + Configuration.HOSTNAME + ":" + Configuration.PORT + "/" + Configuration.DB_NAME;
+			conn = DriverManager.getConnection(url, Configuration.USER, Configuration.PASSWORD);
 			System.out.println("* Verbindung hergestellt");
 
 		} catch (SQLException sqle) {
