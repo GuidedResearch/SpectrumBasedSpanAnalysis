@@ -15,8 +15,7 @@ public abstract class AbstractRankingMode {
 	protected long getDurationOfTrace(List<ZipkinSpan> spans) {
 		for (ZipkinSpan zipkinSpan : spans) {
 			// Find root span
-			Long parentId = zipkinSpan.getParent_id();
-			if (parentId == 0) {
+			if (zipkinSpan.getParent_id() == 0) {
 				return zipkinSpan.getDuration();
 			}
 		}
